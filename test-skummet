@@ -4,9 +4,9 @@ mvn package
 mkdir -p target-skummet
 rm -rf target-skummet/*
 
-java -cp target/pumpet-1.7.0-RC1-r3-slim.jar:. clojure.main test.clj
-#java -cp target/pumpet-1.7.0-RC1-r3-slim.jar:. -Dclojure.compiler.verbose-output=true clojure.main test.clj
-java -cp target/pumpet-1.7.0-RC1-r3-slim.jar:target-skummet testskummet.bar 123456 example
+java -cp target/pumpet-1.7.0-RC1-r4-slim.jar:. clojure.main test.clj
+#java -cp target/pumpet-1.7.0-RC1-r4-slim.jar:. -Dclojure.compiler.verbose-output=true clojure.main test.clj
+java -cp target/pumpet-1.7.0-RC1-r4-slim.jar:target-skummet testskummet.bar 123456 example
 
 # Pack Skummet
 rm -rf target/skummet
@@ -20,12 +20,14 @@ cp -r target/classes/clojure/java/api/ target/skummet/clojure/java/
 cp -r src/clj/clojure target/skummet/
 cp target/classes/clojure/main.class target/skummet/clojure/
 cd target/skummet/
-rm -f ../pumpet-1.7.0-RC1-r3.jar
-zip -rq ../pumpet-1.7.0-RC1-r3.jar *
+
+rm -f ../pumpet-1.7.0-RC1-r4.jar
+zip -rq ../pumpet-1.7.0-RC1-r4.jar *
 cd ../..
 
 # Retry tests
-# rm -rf target-skummet/*
-# java -cp target/pumpet-1.7.0-RC1-r3.jar:. -Dclojure.compile.ignore-lean-classes=true clojure.main test2.clj
+rm -rf target-skummet/*
+java -cp target/pumpet-1.7.0-RC1-r4.jar:. -Dclojure.compile.ignore-lean-classes=true clojure.main test2.clj
 rm -rf target-skummet/clojure
-java -cp target/pumpet-1.7.0-RC1-r3.jar:target-skummet testskummet.bar 123456 example
+java -cp target/pumpet-1.7.0-RC1-r4.jar:target-skummet testskummet.bar 123456 example
+
