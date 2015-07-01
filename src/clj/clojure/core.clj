@@ -466,7 +466,7 @@
                             d))]
                (list 'do
                      (cons `defn decl)
-                     (list '. (list 'var name) '(setMacro))
+                     (list 'clojure.lang.Var/setMacro (list 'var name))
                      (list 'var name)))))
 
 

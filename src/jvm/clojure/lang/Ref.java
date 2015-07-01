@@ -241,6 +241,12 @@ public void run(){
 	invoke();
 }
 
+public void setMacro() { }
+
+public boolean isMacro() {
+    return false;
+}
+
 public Object invoke() {
 	return fn().invoke();
 }

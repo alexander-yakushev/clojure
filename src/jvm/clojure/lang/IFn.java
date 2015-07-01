@@ -22,6 +22,10 @@ import java.util.concurrent.Callable;
  */
 public interface IFn extends Callable, Runnable{
 
+public void setMacro();
+
+public boolean isMacro();
+
 public Object invoke() ;
 
 public Object invoke(Object arg1) ;

@@ -127,6 +127,12 @@ private Object readResolve() throws ObjectStreamException{
 	return intern(sym);
 }
 
+public void setMacro() { }
+
+public boolean isMacro() {
+    return false;
+}
+
 /**
  * Indexer implements IFn for attr access
  *

@@ -138,6 +138,20 @@
     (assert (= (.invoke v1) true) "Locating lean singleton vars doesn't work")
     (assert (= (.invoke v2 10) 52) "Locating lean non-singleton vars doesn't work")))
 
+(defn simple-eval-test []
+  (assert (= (eval '(+ 20 30)) 50) "Simplest eval doesn't work")
+  (assert (= (eval '(str "foo" "bar")) "foobar") "Simplest eval doesn't work")
+  (assert (= (eval '(reduce + (remove odd? (range 10)))) 20) "Simplest eval doesn't work"))
+
+(defn complex-eval-test []
+  ;; Fuck me if this ever works
+  (eval '(let [x 42]
+           (assert (= (+ x 10) 52) "asserts from eval let don't work")))
+  (eval '(do (def val-inside-eval 42)
+             (defn fn-inside-eval [x y] (+ x y))
+             (assert (= (fn-inside-eval 100 val-inside-eval) 142) "asserts from eval don't work")))
+  (assert (= ((resolve 'fn-inside-eval) 10 10) 20) "asserts outside eval don't work"))
+
 (defn -main [& args]
   (assert (= (my-multi 10 20) 30) "Multimethods don't work")
   (assert (= testskummet.foo/just-value 42))
@@ -167,6 +181,8 @@
   (test-spit-and-slurp)
   (test-dynamic-vars)
   (test-locating-lean-vars)
+  (simple-eval-test)
+  (complex-eval-test)
 
   ;; (let [h [:span {:class "foo"} "bar"]]
   ;;     (println (html h)))

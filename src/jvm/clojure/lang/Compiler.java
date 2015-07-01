@@ -293,6 +293,7 @@ static public IPersistentSet coreNonLeanVars = PersistentHashSet.create(
 	"#'clojure.core/in-ns", "#'clojure.core/refer", "#'clojure.core/load-file",
 	"#'clojure.core/load", "#'clojure.core/defn", "#'clojure.core/defmacro",
 	"#'clojure.core/parents", "#'clojure.core/ancestors", "#'clojure.core/pr-on",
+	"#'clojure.core/let", "#'clojure.core/loop", "#'clojure.core/fn",
 	"#'clojure.core/isa?", "#'clojure.core/global-hierarchy", "#'clojure.core/..",
 	"#'clojure.core/imap-cons", "#'clojure.core/instance?", "#'clojure.core/require");
 
@@ -535,7 +536,7 @@ static class DefExpr implements Expr{
 		boolean emitLeanCode = RT.booleanCast(EMIT_LEAN_CODE.deref());
 		if (emitLeanCode && RT.booleanCast(IS_COMPILING_A_MACRO.deref())) {
 			// Don't emit macros in lean compilation mode
-			return;
+			// return;
 		}
 
 		if (emitLeanCode && isLeanVar(var))
@@ -4766,7 +4767,8 @@ static public class ObjExpr implements Expr{
 		} else {
 			bytecode = cw.toByteArray();
 			if (RT.booleanCast(COMPILE_FILES.deref())
-				&& !RT.booleanCast(IS_COMPILING_A_MACRO.deref())) {
+				// && !RT.booleanCast(IS_COMPILING_A_MACRO.deref())
+                ) {
 				try {
 					// Repeat compile() method but with lean code flag set.
 					Var.pushThreadBindings(RT.map(EMIT_LEAN_CODE, true));
@@ -7318,6 +7320,22 @@ static Namespace namespaceFor(Namespace inns, Symbol sym){
 	return ns;
 }
 
+static public Var resolveLeanVar(Symbol sym) {
+    if (sym.ns != null)
+        return resolveLeanVar(Namespace.find(Symbol.intern(sym.ns)), Symbol.intern(sym.name));
+    else
+        return resolveLeanVar(currentNS(), sym);
+}
+
+static public Var resolveLeanVar(Namespace n, Symbol sym) {
+    Var leanVar = Var.intern(n, sym);
+    leanVar.deref();
+    if (leanVar.hasRoot())
+        return leanVar;
+    else
+        return null;
+}
+
 static public Object resolveIn(Namespace n, Symbol sym, boolean allowPrivate) {
 	//note - ns-qualified vars must already exist
 	if(sym.ns != null)
@@ -7327,6 +7345,8 @@ static public Object resolveIn(Namespace n, Symbol sym, boolean allowPrivate) {
 			throw Util.runtimeException("No such namespace: " + sym.ns);
 
 		Var v = ns.findInternedVar(Symbol.intern(sym.name));
+        if(v == null)
+            v = resolveLeanVar(ns, Symbol.intern(sym.name));
 		if(v == null)
 			throw Util.runtimeException("No such var: " + sym);
 		else if(v.ns != currentNS() && !v.isPublic() && !allowPrivate)
@@ -7354,7 +7374,12 @@ static public Object resolveIn(Namespace n, Symbol sym, boolean allowPrivate) {
 				}
 			else
 				{
-				throw Util.runtimeException("Unable to resolve symbol: " + sym + " in this context");
+                    // Try grabbing a lean var
+                    Var leanVar = resolveLeanVar(n, sym);
+                    if (leanVar != null)
+                        return leanVar;
+                    else
+                        throw Util.runtimeException("Unable to resolve symbol: " + sym + " in this context");
 				}
 			}
 		return o;
@@ -7443,6 +7468,12 @@ static Var lookupVar(Symbol sym, boolean internNew, boolean register) {
 	boolean leanCompile = RT.booleanCast(LEAN_COMPILE.deref());
 	if(var != null && (!leanCompile || register))
 		registerVar(var);
+
+    if (var == null) {
+        // If var is still null maybe it's a lean var?
+        var = resolveLeanVar(sym);
+    }
+
 	return var;
 }
 
@@ -7753,7 +7784,8 @@ static void compile1(GeneratorAdapter gen, ObjExpr objx, Object form) {
 					}
 				}
 
-			if (!RT.booleanCast(IS_COMPILING_A_MACRO.deref()) && !isCompilingAMacro) {
+			if (true // !RT.booleanCast(IS_COMPILING_A_MACRO.deref()) && !isCompilingAMacro
+                ) {
 				try {
 					Var.pushThreadBindings(RT.map(EMIT_LEAN_CODE, true));
 					expr.emit(C.STATEMENT, objx, gen);

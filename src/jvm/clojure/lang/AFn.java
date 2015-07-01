@@ -14,6 +14,16 @@ package clojure.lang;
 
 public abstract class AFn implements IFn {
 
+private boolean macroFlag = false;
+
+public void setMacro() {
+    macroFlag = true;
+}
+
+public boolean isMacro() {
+    return macroFlag;
+}
+
 public Object call() {
 	return invoke();
 }

@@ -14,6 +14,7 @@ package clojure.lang;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 import clojure.asm.Type;
+import java.lang.reflect.Field;
 
 public final class Var extends ARef implements IFn, IRef, Settable{
 
@@ -222,10 +223,10 @@ final public Object derefLean() {
         Object val = Class.forName(varClassName).getField("__instance").get(null);
         System.out.println("WARNING: skummet resolved a lean singleton var " + this);
         bindRoot(val);
-        // // Set macro flag from IFn to Var
-        // if (val instanceof IFn && ((IFn)val).isMacro()) {
-        //     this.setMacro();
-        // }
+        // Set macro flag from IFn to Var
+        if (val instanceof IFn && ((IFn)val).isMacro()) {
+            this.setMacro();
+        }
         return val;
     } catch (ReflectiveOperationException ex) { }
 
@@ -298,6 +299,10 @@ public void setMacro() {
 
 public boolean isMacro(){
 	return RT.booleanCast(meta().valAt(macroKey));
+}
+
+public static void setMacro(IFn fn) {
+    fn.setMacro();
 }
 
 //public void setExported(boolean state){
