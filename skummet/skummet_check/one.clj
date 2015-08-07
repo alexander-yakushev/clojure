@@ -203,6 +203,9 @@
            (next xs))
     x))
 
+(defn ^:strict is-nil? [x]
+  (nil? x))
+
 ;; should use typed fields for both, and toString should need no casting
 (deftype ^:strict StrictType [^int x ^String s]
   Object
@@ -240,11 +243,11 @@
   (test-dynamic-vars)
   (test-locating-lean-vars)
   (assert (= (test-redefinition "foobar") 6) "Redefined functions don't work.")
-  (do
-    (assert (= 20 (strict-sum 5 [1 2 3 4 5])) "^:strict locals don't work")
-    (assert (= "helloworld!" (concat-via-recur "hello" "world" "!")) "^:strict args don't work")
-    (let [x (StrictType. 1234 "test")]
-      (assert (= [1234 "test-str"] [(hash x) (str x)]) "^:strict deftype doesn't work")))
+  (assert (= 20 (strict-sum 5 [1 2 3 4 5])) "^:strict locals don't work")
+  (assert (= "helloworld!" (concat-via-recur "hello" "world" "!")) "^:strict args don't work")
+  (let [x (StrictType. 1234 "test")]
+    (assert (= [1234 "test-str"] [(hash x) (str x)]) "^:strict deftype doesn't work"))
+  (assert (not (nil? 5)) "nil? is broken")
 
   ;; (let [h [:span {:class "foo"} "bar"]]
   ;;     (println (html h)))

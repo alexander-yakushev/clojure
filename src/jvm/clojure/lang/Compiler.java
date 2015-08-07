@@ -423,13 +423,17 @@ static final public Var CLEAR_ROOT = Var.create(null).setDynamic();
 static final public Var CLEAR_SITES = Var.create(null).setDynamic();
 
 	private static boolean compatibleType(Object tag, Class c) {
-		return tag == null || HostExpr.tagToClass(tag).isAssignableFrom(c);
+		return (tag == null // anything is compatible if you have no expectations
+						|| c == null // the constant expression nil never needs to be cast
+						|| HostExpr.tagToClass(tag).isAssignableFrom(c)); // otherwise they have to line up
 	}
 
 	private static void maybeCastTo(ObjExpr objx, GeneratorAdapter gen, Expr e, Object tag) {
 		if (tag == null) return;
 		final Class type = HostExpr.tagToClass(tag);
-		if (!strictMode() || type.isPrimitive() || e.needsCast(objx) || !compatibleType(type, e.hasJavaClass() ? e.getJavaClass() : Object.class))
+		if (!strictMode()
+						|| type.isPrimitive() || e.needsCast(objx)
+						|| !compatibleType(type, e.hasJavaClass() ? e.getJavaClass() : Object.class))
     {
       HostExpr.emitUnboxArg(objx, gen, type);
     }
@@ -6807,7 +6811,7 @@ public static class LetExpr implements Expr, MaybePrimitiveExpr{
 					final Expr binit = bi.binding.init;
 					final Symbol tag = bi.binding.tag;
 					if (strictMode() && tag != null) {
-						if (binit.needsCast(objx) || !binit.hasJavaClass() || !compatibleType(tag, binit.getJavaClass())) {
+						if (!binit.hasJavaClass() || binit.needsCast(objx) || !compatibleType(tag, binit.getJavaClass())) {
 							gen.checkCast(getType(HostExpr.tagToClass(tag)));
 						}
 					}
