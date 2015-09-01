@@ -13,6 +13,7 @@
   (try
     (clojure.lang.RT/resetID)
     (compile 'clojure.core)
+    (compile 'clojure.java.io)
     (compile 'skummet-check.one)
     (compile 'skummet-check.hello)
     (finally (pop-thread-bindings))))
