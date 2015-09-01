@@ -161,11 +161,14 @@
         ifn-type (totype clojure.lang.IFn)
         iseq-type (totype clojure.lang.ISeq)
         ex-type  (totype java.lang.UnsupportedOperationException)
-        override-mm (set (map str overrides-methods))
+        override-mm (into1 {} (map (fn [[mname cnt]] [(str mname) cnt]) overrides-methods))
+        override? (fn [m]
+                    (when-let [argcount (get override-mm (.getName m))]
+                      (= (dec argcount) (count (.getParameterTypes m)))))
         non-priv-methods (mapcat non-private-methods supers)
         all-sigs (distinct (concat () (map #(let[[m p] (key %)] {m [p]})
                                            (if overrides-methods
-                                             (filter #(override-mm (.getName (second %))) non-priv-methods)
+                                             (filter #(override? (second %)) non-priv-methods)
                                              non-priv-methods))
                                    (map (fn [[m p]] {(str m) [p]}) methods)))
         sigs-by-name (apply merge-with concat {} all-sigs)
@@ -408,19 +411,21 @@
                                         ;add methods matching supers', if no fn -> call super
     (let [all-mm (non-private-methods super)
           mm (if overrides-methods
-               (reduce1 (fn [mm [key val]] (if (override-mm (.getName val)) (assoc mm key val) mm)) {} all-mm)
+               (reduce1 (fn [mm [key val]] (if (override? val) (assoc mm key val) mm)) {} all-mm)
                all-mm)]
       (doseq [^java.lang.reflect.Method meth (vals mm)]
              (emit-forwarding-method (.getName meth) (.getParameterTypes meth) (.getReturnType meth) false
-                                     (fn [^GeneratorAdapter gen ^Method m]
-                                       (. gen (loadThis))
-                                        ;push args
-                                       (. gen (loadArgs))
-                                        ;call super
-                                       (. gen (visitMethodInsn (. Opcodes INVOKESPECIAL) 
-                                                               (. super-type (getInternalName))
-                                                               (. m (getName))
-                                                               (. m (getDescriptor)))))))
+                                     (if (Modifier/isAbstract (. meth (getModifiers)))
+                                       emit-unsupported
+                                       (fn [^GeneratorAdapter gen ^Method m]
+                                         (. gen (loadThis))
+                                          ;push args
+                                         (. gen (loadArgs))
+                                          ;call super if not abstract
+                                         (. gen (visitMethodInsn (. Opcodes INVOKESPECIAL)
+                                                                 (. super-type (getInternalName))
+                                                                 (. m (getName))
+                                                                 (. m (getDescriptor))))))))
                                         ;add methods matching interfaces', if no fn -> throw
       (reduce1 (fn [mm ^java.lang.reflect.Method meth]
                 (if (contains? mm (method-sig meth))
