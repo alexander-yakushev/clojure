@@ -144,7 +144,17 @@
     (assert (= (.invoke v1) true) "Locating lean singleton vars doesn't work")
     (assert (= (.invoke v2 10) 52) "Locating lean non-singleton vars doesn't work")))
 
-(gen-class :name TestClass)
+(gen-class :name "skummet_check.TestClass"
+           :prefix "TestClass-"
+           :implements [java.lang.Comparable]
+           :methods [[name [] String]]
+           :overrides-methods [[compareTo 2]])
+
+(defn TestClass-name [this]
+  "TestClass")
+
+(defn TestClass-compareTo [this other]
+  1)
 
 (defmacro memoized [inside-defn]
   (let [[_ name & fdecl] inside-defn
@@ -245,13 +255,10 @@
   (let [x (StrictType. 1234 "test")]
     (assert (= [1234 "test-str"] [(hash x) (str x)]) "^:strict deftype doesn't work"))
   (assert (not (nil? 5)) "nil? is broken")
+  (import 'skummet_check.TestClass)
+  (assert (= (.name (.newInstance (resolve 'skummet_check.TestClass))) "TestClass") "Own methods in gen-class are broken")
+  (assert (= (.compareTo (.newInstance (resolve 'skummet_check.TestClass)) (Object.)) 1) "Overloaded methods in gen-class are broken")
 
-  ;; (let [h [:span {:class "foo"} "bar"]]
-  ;;     (println (html h)))
-  ;; (println (hiccup.util/as-str 100 200 300))
-  ;; (println  @clojure.core.async.impl.dispatch/executor)
-  ;; (println clojure.core.async.impl.exec.threadpool/the-executor)
-  ;; (clojure.core.async.impl.dispatch/run #(println "RUNNING FROM EXECUTOR!"))
   ;; (let [c (a/chan)]
   ;;   (a/put! c (first args))
   ;;   (a/go (println "answer is" (a/<! c))))

@@ -11,10 +11,7 @@
 (import '(java.lang.reflect Modifier Constructor)
         '(clojure.asm ClassWriter ClassVisitor Opcodes Type)
         '(clojure.asm.commons Method GeneratorAdapter)
-        '(clojure.lang IPersistentMap))
-
-;(defn method-sig [^java.lang.reflect.Method meth]
-;  [(. meth (getName)) (seq (. meth (getParameterTypes)))])
+        '(clojure.lang Namespace Var IPersistentMap))
 
 (defn- filter-methods [^Class c invalid-method?]
   (loop [mm {}
@@ -162,7 +159,7 @@
         iseq-type (totype clojure.lang.ISeq)
         ex-type  (totype java.lang.UnsupportedOperationException)
         override-mm (into1 {} (map (fn [[mname cnt]] [(str mname) cnt]) overrides-methods))
-        override? (fn [m]
+        override? (fn [^java.lang.reflect.Method m]
                     (when-let [argcount (get override-mm (.getName m))]
                       (= (dec argcount) (count (.getParameterTypes m)))))
         non-priv-methods (mapcat non-private-methods supers)
@@ -181,6 +178,10 @@
                                              (mapcat (fn [[m s]] (map #(overload-name m (map the-class %)) s)) overloads)
                                              (mapcat (comp (partial map str) vals val) exposes))))
         emit-get-var (fn [^GeneratorAdapter gen v]
+                       (let [^Namespace ns (.deref (clojure.lang.RT/CURRENT_NS))
+                             sym (symbol (str prefix v))
+                             ^Var var (or (.getMapping ns sym) (.intern ns sym))]
+                         (.setNotLean var true))
                        (let [false-label (. gen newLabel)
                              end-label (. gen newLabel)]
                          (. gen getStatic ctype (var-name v) var-type)

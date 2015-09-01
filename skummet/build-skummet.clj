@@ -8,7 +8,9 @@
                                            :inline :declared :private
                                            :column :static :author :added :dynamic]
                               :neko.init/release-build true}
-          *lean-var?* (fn [^clojure.lang.Var v] v)]
+          *lean-var?* (fn [^clojure.lang.Var v]
+                        (when-not (not-lean-vars (str v))
+                          v))]
   (push-thread-bindings {#'clojure.core/*loaded-libs* (ref (sorted-set))})
   (try
     (clojure.lang.RT/resetID)
