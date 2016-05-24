@@ -1,6 +1,6 @@
 (ns skummet-check.one
-  (:use [skummet-check.two :only [myfn]])
-  (:require [clojure.java.io :as io])
+  (:require [clojure.java.io :as io]
+            [skummet-check.two :refer [myfn]])
   ;; (:require clojure.pprint)
   ;; (:require [hiccup.core :refer [html]]
   ;;           hiccup.util
