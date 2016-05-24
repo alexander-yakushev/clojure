@@ -227,7 +227,7 @@ final public Object derefLean() {
         //     this.setMacro();
         // }
         return val;
-    } catch (ReflectiveOperationException ex) { }
+    } catch (Exception ex) { }
 
     // Now try a non-singleton inside-namespace field
     try {
@@ -236,7 +236,7 @@ final public Object derefLean() {
         System.out.println("WARNING: skummet resolved a lean non-singleton var " + this);
         bindRoot(val);
         return val;
-    } catch (ReflectiveOperationException ex) { }
+    } catch (Exception ex) { }
 
     return null;
 }
